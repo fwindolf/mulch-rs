@@ -12,6 +12,7 @@ pub mod prune;
 pub mod query;
 pub mod ready;
 pub mod record;
+pub mod remove;
 pub mod search;
 pub mod setup;
 pub mod status;

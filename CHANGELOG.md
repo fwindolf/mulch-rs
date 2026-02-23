@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2026-02-23
+
+### Changed
+- `onboard` rewritten: static onboarding content (mulch knowledge + bd task tracking)
+  instead of dynamic expertise section
+- `onboard` now supports target flags: `--auto`, `--agents`, `--claude`, `--copilot`,
+  `--codex`, `--opencode` (mutually exclusive) with auto-discovery fallback
+- `onboard --check` to verify if onboard section is installed
+- `onboard --remove` to remove the onboard section (deletes file if empty)
+- Removed `ensure_mulch_dir` call from onboard (no longer needs config)
+
 ## [0.1.1] - 2026-02-23
 
 ### Changed

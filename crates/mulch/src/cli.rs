@@ -30,6 +30,9 @@ pub enum Commands {
     /// Add a new expertise domain
     Add(AddArgs),
 
+    /// Remove an expertise domain
+    Remove(RemoveArgs),
+
     /// Record an expertise record
     Record(RecordArgs),
 
@@ -72,7 +75,7 @@ pub enum Commands {
     /// Configure IDE provider recipes and git hooks
     Setup(SetupArgs),
 
-    /// Add/update project expertise section in CLAUDE.md or AGENTS.md
+    /// Write onboarding content to agent instruction file
     Onboard(OnboardArgs),
 
     /// Validate, stage, and commit .mulch/ to git
@@ -92,6 +95,16 @@ pub enum Commands {
 pub struct AddArgs {
     /// Domain name to add
     pub domain: String,
+}
+
+#[derive(Args, Debug)]
+pub struct RemoveArgs {
+    /// Domain name to remove
+    pub domain: String,
+
+    /// Force removal even if domain has records
+    #[arg(long)]
+    pub force: bool,
 }
 
 #[derive(Args, Debug)]
@@ -443,9 +456,41 @@ pub struct SetupArgs {
 
 #[derive(Args, Debug)]
 pub struct OnboardArgs {
-    /// Update existing section instead of creating new
+    /// Auto-discover target file (default).
+    #[arg(long, group = "target")]
+    pub auto: bool,
+
+    /// Write to AGENTS.md.
+    #[arg(long, group = "target")]
+    pub agents: bool,
+
+    /// Write to CLAUDE.md.
+    #[arg(long, group = "target")]
+    pub claude: bool,
+
+    /// Write to .github/copilot-instructions.md.
+    #[arg(long, group = "target")]
+    pub copilot: bool,
+
+    /// Write to CODEX.md.
+    #[arg(long, group = "target")]
+    pub codex: bool,
+
+    /// Write to .opencode/instructions.md.
+    #[arg(long, group = "target")]
+    pub opencode: bool,
+
+    /// Update existing section instead of creating new.
     #[arg(long)]
     pub update: bool,
+
+    /// Check if onboard section is installed.
+    #[arg(long, conflicts_with = "remove")]
+    pub check: bool,
+
+    /// Remove the onboard section instead of writing it.
+    #[arg(long, conflicts_with = "check")]
+    pub remove: bool,
 }
 
 #[derive(Args, Debug)]

@@ -15,6 +15,7 @@ fn main() {
     let result = match &cli.command {
         Commands::Init => commands::init::run(&ctx),
         Commands::Add(args) => commands::add::run(&ctx, args),
+        Commands::Remove(args) => commands::remove::run(&ctx, args),
         Commands::Record(args) => commands::record::run(&ctx, args),
         Commands::Edit(args) => commands::edit::run(&ctx, args),
         Commands::Query(args) => commands::query::run(&ctx, args),

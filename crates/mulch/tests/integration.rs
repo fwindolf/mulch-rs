@@ -193,6 +193,70 @@ fn add_invalid_domain_name_fails() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 2b. REMOVE DOMAIN
+// ═══════════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn remove_empty_domain() {
+    let dir = init_project_with_domain("test");
+    mulch()
+        .args(["remove", "test"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Removed domain"));
+
+    let config = fs::read_to_string(dir.path().join(".mulch/mulch.config.yaml")).unwrap();
+    assert!(!config.contains("test"));
+    assert!(!dir.path().join(".mulch/expertise/test.jsonl").exists());
+}
+
+#[test]
+fn remove_nonexistent_domain_fails() {
+    let dir = init_project();
+    mulch()
+        .args(["remove", "nope"])
+        .current_dir(dir.path())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("does not exist"));
+}
+
+#[test]
+fn remove_domain_with_records_requires_force() {
+    let dir = init_project_with_domain("test");
+    record_convention(&dir, "test", "Use snake_case");
+
+    // Without --force should fail
+    mulch()
+        .args(["remove", "test"])
+        .current_dir(dir.path())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("--force"));
+
+    // With --force should succeed
+    mulch()
+        .args(["remove", "test", "--force"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Removed domain"));
+
+    assert!(!dir.path().join(".mulch/expertise/test.jsonl").exists());
+}
+
+#[test]
+fn remove_domain_json_output() {
+    let dir = init_project_with_domain("test");
+    mulch()
+        .args(["--json", "remove", "test"])
+        .current_dir(dir.path())
+        .assert()
+        .success();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 3. RECORD ALL 6 TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -2226,4 +2290,142 @@ fn query_auto_selects_single_domain() {
         .assert()
         .success()
         .stdout(predicate::str::contains("Single domain"));
+}
+
+// ── Onboard ─────────────────────────────────────────────────────────────────
+
+#[test]
+fn onboard_creates_agents_md() {
+    let dir = init_project();
+    mulch()
+        .args(["onboard"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Wrote onboarding to"));
+
+    let content = fs::read_to_string(dir.path().join("AGENTS.md")).unwrap();
+    assert!(content.contains("<!-- mulch:start -->"));
+    assert!(content.contains("<!-- mulch:end -->"));
+    assert!(content.contains("mulch prime"));
+}
+
+#[test]
+fn onboard_prefers_claude_md() {
+    let dir = init_project();
+    fs::write(dir.path().join("CLAUDE.md"), "# Project\n").unwrap();
+
+    mulch()
+        .args(["onboard"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("CLAUDE.md"));
+
+    // AGENTS.md should NOT be created
+    assert!(!dir.path().join("AGENTS.md").exists());
+}
+
+#[test]
+fn onboard_check_reports_installed() {
+    let dir = init_project();
+    // Install first
+    mulch()
+        .args(["onboard"])
+        .current_dir(dir.path())
+        .assert()
+        .success();
+    // Check
+    mulch()
+        .args(["onboard", "--check"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("installed"));
+}
+
+#[test]
+fn onboard_check_reports_missing() {
+    let dir = init_project();
+    fs::write(dir.path().join("AGENTS.md"), "# No mulch\n").unwrap();
+
+    mulch()
+        .args(["onboard", "--check"])
+        .current_dir(dir.path())
+        .assert()
+        .failure();
+}
+
+#[test]
+fn onboard_remove_deletes_section() {
+    let dir = init_project();
+    // Install
+    mulch()
+        .args(["onboard"])
+        .current_dir(dir.path())
+        .assert()
+        .success();
+    assert!(dir.path().join("AGENTS.md").exists());
+
+    // Remove — file was only the onboard section, should be deleted
+    mulch()
+        .args(["onboard", "--remove"])
+        .current_dir(dir.path())
+        .assert()
+        .success();
+    assert!(!dir.path().join("AGENTS.md").exists());
+}
+
+#[test]
+fn onboard_remove_preserves_other_content() {
+    let dir = init_project();
+    // Create file with extra content, then onboard
+    fs::write(dir.path().join("AGENTS.md"), "# My Project\n").unwrap();
+    mulch()
+        .args(["onboard"])
+        .current_dir(dir.path())
+        .assert()
+        .success();
+
+    // Remove
+    mulch()
+        .args(["onboard", "--remove"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Removed onboard section from"));
+
+    // File should still exist with original content
+    let content = fs::read_to_string(dir.path().join("AGENTS.md")).unwrap();
+    assert!(content.contains("# My Project"));
+    assert!(!content.contains("mulch:start"));
+}
+
+#[test]
+fn onboard_remove_noop_no_file() {
+    let dir = init_project();
+    // No AGENTS.md or CLAUDE.md — should be a noop
+    mulch()
+        .args(["onboard", "--remove"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("No AGENTS.md found"));
+}
+
+#[test]
+fn onboard_is_idempotent() {
+    let dir = init_project();
+    // Install twice
+    mulch()
+        .args(["onboard"])
+        .current_dir(dir.path())
+        .assert()
+        .success();
+    mulch()
+        .args(["onboard"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("already exists"));
 }

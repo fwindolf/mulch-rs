@@ -76,7 +76,7 @@ Everything is git-tracked. Clone a repo and your agents immediately have the pro
 | `mulch validate` | Schema validation across all files |
 | `mulch doctor` | Run health checks (`--fix` to auto-fix) |
 | `mulch setup [provider]` | Install provider-specific hooks (claude, cursor, codex, gemini, windsurf, aider) |
-| `mulch onboard` | Generate AGENTS.md/CLAUDE.md snippet |
+| `mulch onboard` | Write onboarding content to agent instruction file (`--agents`, `--claude`, `--copilot`, `--codex`, `--opencode`, `--check`, `--remove`) |
 | `mulch prune` | Remove stale tactical/observational entries |
 | `mulch ready` | Show recently added or updated records (`--since`, `--domain`, `--limit`) |
 | `mulch sync` | Validate, stage, and commit `.mulch/` changes |
