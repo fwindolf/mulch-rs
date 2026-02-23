@@ -1,0 +1,45 @@
+[workspace]
+resolver = "2"
+members = ["crates/mulch", "crates/mulch-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+repository = "https://github.com/fwindolf/mulch-rs"
+homepage = "https://github.com/fwindolf/mulch-rs"
+description = "Structured expertise management for AI coding agents"
+
+[workspace.dependencies]
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# CLI
+clap = { version = "4", features = ["derive", "string", "wrap_help"] }
+
+# Crypto
+sha2 = "0.10"
+
+# Date/Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Terminal
+owo-colors = "4"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# File system
+tempfile = "3"
+
+# Regex
+regex = "1"
+
+# Testing
+pretty_assertions = "1.4"
+assert_cmd = "2.0"
+predicates = "3"
