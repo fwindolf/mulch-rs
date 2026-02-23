@@ -10,29 +10,6 @@ const EXPERTISE_DIR: &str = "expertise";
 
 pub const GITATTRIBUTES_LINE: &str = ".mulch/expertise/*.jsonl merge=union";
 
-pub const MULCH_README: &str = r#"# .mulch/
-
-This directory is managed by [mulch](https://github.com/jayminwest/mulch) — a structured expertise layer for coding agents.
-
-## Key Commands
-
-- `mulch init`      — Initialize a .mulch directory
-- `mulch add`       — Add a new domain
-- `mulch record`    — Record an expertise record
-- `mulch edit`      — Edit an existing record
-- `mulch query`     — Query expertise records
-- `mulch prime [domain]` — Output a priming prompt (optionally scoped to one domain)
-- `mulch search`   — Search records across domains
-- `mulch status`    — Show domain statistics
-- `mulch validate`  — Validate all records against the schema
-- `mulch prune`     — Remove expired records
-
-## Structure
-
-- `mulch.config.yaml` — Configuration file
-- `expertise/`        — JSONL files, one per domain
-"#;
-
 pub fn get_mulch_dir(cwd: &Path) -> PathBuf {
     cwd.join(MULCH_DIR)
 }
@@ -119,12 +96,6 @@ pub fn init_mulch_dir(cwd: &Path) -> Result<()> {
             &gitattributes_path,
             format!("{existing}{separator}{GITATTRIBUTES_LINE}\n"),
         )?;
-    }
-
-    // Create README if missing
-    let readme_path = mulch_dir.join("README.md");
-    if !readme_path.exists() {
-        fs::write(&readme_path, MULCH_README)?;
     }
 
     Ok(())

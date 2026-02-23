@@ -1,0 +1,27 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.1.1] - 2026-02-23
+
+### Changed
+- `onboard` command now targets `CLAUDE.md` or `AGENTS.md` instead of `README.md` (prefers existing `CLAUDE.md`, falls back to `AGENTS.md`)
+- Onboard section uses lightweight instructions focused on mulch workflow
+- Removed `--provider` flag from `onboard` (no longer needed)
+- `init` no longer creates `.mulch/README.md`
+
+## [0.1.0] - 2026-02-23
+
+### Added
+- Initial Rust port of [mulch](https://github.com/jayminwest/mulch)
+- Two-crate workspace: `mulch-core` (library) and `mulch` (CLI binary)
+- 20 CLI commands: init, add, record, edit, query, search, delete, prime, status, validate, prune, doctor, ready, learn, compact, setup, onboard, sync, update, diff
+- 6 record types: convention, pattern, failure, decision, reference, guide
+- BM25 full-text search across domains
+- Token budgeting with priority-based record selection
+- JSONL storage with atomic writes and advisory file locking
+- Format-level compatibility with existing `.mulch/` directories from the TypeScript version
+- Output formats: markdown, XML, plain text, compact, MCP JSON
+- Cross-platform CI (Linux, macOS, Windows)
+- Release workflow for 6 targets (Linux/macOS/Windows x86_64 + ARM64)
+- 132 tests (90 integration + 42 unit)

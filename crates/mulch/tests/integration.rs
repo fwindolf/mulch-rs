@@ -99,7 +99,6 @@ fn init_creates_mulch_directory() {
     assert!(dir.path().join(".mulch").is_dir());
     assert!(dir.path().join(".mulch/mulch.config.yaml").is_file());
     assert!(dir.path().join(".mulch/expertise").is_dir());
-    assert!(dir.path().join(".mulch/README.md").is_file());
 }
 
 #[test]

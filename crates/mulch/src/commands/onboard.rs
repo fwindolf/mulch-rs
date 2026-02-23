@@ -1,32 +1,27 @@
 use anyhow::{Context, Result};
 use std::fs;
+use std::path::PathBuf;
 
 use crate::cli::OnboardArgs;
 use crate::context::RuntimeContext;
 use crate::output::*;
 use mulch_core::{config, markers, storage};
 
-fn build_expertise_section(ctx: &RuntimeContext, provider: Option<&str>) -> Result<String> {
+fn build_expertise_section(ctx: &RuntimeContext) -> Result<String> {
     let cfg = config::read_config(&ctx.cwd)?;
 
     let mut lines = vec![
-        "## Project Expertise (Mulch)".to_string(),
+        "## Mulch".to_string(),
         String::new(),
-        "This project uses [mulch](https://github.com/jayminwest/mulch) to manage structured expertise for coding agents.".to_string(),
-        String::new(),
-        "### Quick Start".to_string(),
-        String::new(),
-        "```bash".to_string(),
-        "mulch prime          # Load expertise at session start".to_string(),
-        "mulch search \"query\" # Find relevant records".to_string(),
-        "mulch record <domain> --type <type> --description \"...\"".to_string(),
-        "mulch sync           # Commit changes".to_string(),
-        "```".to_string(),
-        String::new(),
+        "Use Mulch to build knowledge about the project. DO NOT USE MEMORY.md".to_string(),
+        "At session start: `mulch prime` (or `mulch prime --files <path>` for targeted context).".to_string(),
+        "Before finishing: `mulch learn` → `mulch record <domain> --type <type> --description \"...\"` → `mulch sync`.".to_string(),
+        "Types: convention | pattern | failure | decision | reference | guide.".to_string(),
     ];
 
     // Domain summary
     if !cfg.domains.is_empty() {
+        lines.push(String::new());
         lines.push("### Domains".to_string());
         lines.push(String::new());
         for domain in &cfg.domains {
@@ -34,64 +29,52 @@ fn build_expertise_section(ctx: &RuntimeContext, provider: Option<&str>) -> Resu
             let records = storage::read_expertise_file(&file_path)?;
             lines.push(format!("- **{}**: {} record(s)", domain, records.len()));
         }
-        lines.push(String::new());
-    }
-
-    // Provider-specific instructions
-    if let Some(provider) = provider {
-        lines.push(format!("### {} Integration", capitalize(provider)));
-        lines.push(String::new());
-        match provider {
-            "claude" => {
-                lines.push("Add to your Claude session: `mulch prime`".to_string());
-            }
-            "cursor" => {
-                lines.push(
-                    "Cursor will automatically pick up rules from `.cursor/rules`.".to_string(),
-                );
-            }
-            _ => {
-                lines.push(format!(
-                    "Run `mulch setup --provider {provider}` to configure."
-                ));
-            }
-        }
-        lines.push(String::new());
     }
 
     Ok(lines.join("\n"))
 }
 
-fn capitalize(s: &str) -> String {
-    let mut chars = s.chars();
-    match chars.next() {
-        None => String::new(),
-        Some(c) => c.to_uppercase().to_string() + chars.as_str(),
+/// Find the target file for onboarding: existing CLAUDE.md or AGENTS.md,
+/// falling back to creating AGENTS.md.
+fn resolve_target_file(cwd: &std::path::Path) -> PathBuf {
+    let claude_md = cwd.join("CLAUDE.md");
+    if claude_md.exists() {
+        return claude_md;
     }
+    cwd.join("AGENTS.md")
 }
 
 pub fn run(ctx: &RuntimeContext, args: &OnboardArgs) -> Result<()> {
     config::ensure_mulch_dir(&ctx.cwd)?;
 
-    let readme_path = ctx.cwd.join("README.md");
-    let section = build_expertise_section(ctx, args.provider.as_deref())?;
+    let target_path = resolve_target_file(&ctx.cwd);
+    let target_name = target_path
+        .file_name()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
+    let section = build_expertise_section(ctx)?;
     let wrapped = markers::wrap_in_markers(&format!("{section}\n"));
 
-    if readme_path.exists() {
-        let content = fs::read_to_string(&readme_path).context("Failed to read README.md")?;
+    if target_path.exists() {
+        let content =
+            fs::read_to_string(&target_path).context(format!("Failed to read {target_name}"))?;
 
         if args.update && markers::has_marker_section(&content) {
             // Replace existing section
             if let Some(updated) = markers::replace_marker_section(&content, &wrapped) {
-                fs::write(&readme_path, updated)?;
+                fs::write(&target_path, updated)?;
                 if ctx.json {
                     output_json(&serde_json::json!({
                         "success": true,
                         "command": "onboard",
                         "action": "updated",
+                        "file": target_name,
                     }));
                 } else {
-                    print_success("Updated mulch expertise section in README.md.");
+                    print_success(&format!(
+                        "Updated mulch expertise section in {target_name}."
+                    ));
                 }
                 return Ok(());
             }
@@ -103,20 +86,22 @@ pub fn run(ctx: &RuntimeContext, args: &OnboardArgs) -> Result<()> {
                     "success": true,
                     "command": "onboard",
                     "action": "already_exists",
+                    "file": target_name,
                 }));
             } else {
-                println!("Mulch section already exists in README.md. Use --update to replace it.");
+                println!(
+                    "Mulch section already exists in {target_name}. Use --update to replace it."
+                );
             }
             return Ok(());
         }
 
         // Append section
         let updated = format!("{}\n\n{}\n", content.trim_end(), wrapped);
-        fs::write(&readme_path, updated)?;
+        fs::write(&target_path, updated)?;
     } else {
-        // Create README.md with section
-        let content = format!("# Project\n\n{}\n", wrapped);
-        fs::write(&readme_path, content)?;
+        // Create file with section
+        fs::write(&target_path, format!("{wrapped}\n"))?;
     }
 
     if ctx.json {
@@ -124,9 +109,10 @@ pub fn run(ctx: &RuntimeContext, args: &OnboardArgs) -> Result<()> {
             "success": true,
             "command": "onboard",
             "action": "created",
+            "file": target_name,
         }));
     } else {
-        print_success("Added mulch expertise section to README.md.");
+        print_success(&format!("Added mulch expertise section to {target_name}."));
     }
 
     Ok(())

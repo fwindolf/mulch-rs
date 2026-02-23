@@ -72,7 +72,7 @@ pub enum Commands {
     /// Configure IDE provider recipes and git hooks
     Setup(SetupArgs),
 
-    /// Add/update project expertise section in README
+    /// Add/update project expertise section in CLAUDE.md or AGENTS.md
     Onboard(OnboardArgs),
 
     /// Validate, stage, and commit .mulch/ to git
@@ -443,10 +443,6 @@ pub struct SetupArgs {
 
 #[derive(Args, Debug)]
 pub struct OnboardArgs {
-    /// Provider for README instructions
-    #[arg(long, value_parser = ["claude", "cursor", "codex", "gemini", "windsurf", "aider"])]
-    pub provider: Option<String>,
-
     /// Update existing section instead of creating new
     #[arg(long)]
     pub update: bool,
