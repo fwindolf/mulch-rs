@@ -6,6 +6,7 @@ pub mod delete;
 pub mod diff;
 pub mod doctor;
 pub mod edit;
+pub mod guard;
 pub mod init;
 pub mod learn;
 pub mod onboard;

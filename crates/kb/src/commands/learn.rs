@@ -1,13 +1,44 @@
 use anyhow::{Result, bail};
+use chrono::Utc;
 use std::collections::HashMap;
 
 use crate::cli::LearnArgs;
 use crate::context::RuntimeContext;
 use crate::output::*;
-use kb_core::{config, git, storage};
+use kb_core::{access_log, config, git, storage};
 
 pub fn run(ctx: &RuntimeContext, args: &LearnArgs) -> Result<()> {
     config::ensure_kb_dir(&ctx.cwd)?;
+
+    if args.skip {
+        let session_id = args
+            .session
+            .clone()
+            .unwrap_or_else(|| "unknown".to_string());
+        access_log::append(
+            &ctx.cwd,
+            &access_log::AccessLogEntry {
+                session_id,
+                timestamp: Utc::now(),
+                tool: "learn".into(),
+                domain: None,
+                query: None,
+                entry_id: None,
+                result_count: None,
+                signal: Some("skipped".into()),
+            },
+        )?;
+        if ctx.json {
+            output_json(&serde_json::json!({
+                "success": true,
+                "command": "learn",
+                "skipped": true,
+            }));
+        } else {
+            println!("Marked session as reviewed (nothing to record).");
+        }
+        return Ok(());
+    }
 
     if !git::is_git_repo(&ctx.cwd) {
         if ctx.json {
@@ -141,6 +172,25 @@ pub fn run(ctx: &RuntimeContext, args: &LearnArgs) -> Result<()> {
         println!("Record learnings with:");
         println!("  kb record <domain> --type <type> --description \"...\"");
     }
+
+    // Log that learn was called so `kb guard` knows
+    let session_id = args
+        .session
+        .clone()
+        .unwrap_or_else(|| "unknown".to_string());
+    access_log::append(
+        &ctx.cwd,
+        &access_log::AccessLogEntry {
+            session_id,
+            timestamp: Utc::now(),
+            tool: "learn".into(),
+            domain: None,
+            query: None,
+            entry_id: None,
+            result_count: Some(changed_files.len()),
+            signal: None,
+        },
+    )?;
 
     Ok(())
 }

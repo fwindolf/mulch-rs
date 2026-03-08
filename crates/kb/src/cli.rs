@@ -99,6 +99,9 @@ pub enum Commands {
     /// Check file references in records
     Check(CheckArgs),
 
+    /// Claude Code stop hook gate (reads JSON from stdin)
+    Guard,
+
     /// Run the MCP server (stdio transport)
     Mcp,
 }
@@ -444,6 +447,14 @@ pub struct LearnArgs {
     /// Git ref to compare against
     #[arg(long, default_value = "HEAD")]
     pub since: String,
+
+    /// Mark session as reviewed without recording anything
+    #[arg(long)]
+    pub skip: bool,
+
+    /// Session ID (for access log tracking)
+    #[arg(long)]
+    pub session: Option<String>,
 }
 
 #[derive(Args, Debug)]

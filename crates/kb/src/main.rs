@@ -48,6 +48,7 @@ fn main() {
         Commands::AccessLog(args) => commands::access_log::run(&ctx, args),
         Commands::Session(cmd) => commands::session::run(&ctx, cmd),
         Commands::Check(args) => commands::check::run(&ctx, args),
+        Commands::Guard => commands::guard::run(&ctx),
         Commands::Mcp => unreachable!(),
     };
 

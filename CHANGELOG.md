@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-03-08
+
+### Added
+- **`kb guard`** — new command: Claude Code stop hook gate that only blocks when kb was used and `kb learn` wasn't called
+- **`kb learn --skip`** — mark session as reviewed without recording anything
+- **`kb learn --session`** — pass session ID for access log tracking
+
 ## [0.2.0] - 2026-03-08
 
 ### Changed
